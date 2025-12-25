@@ -5,3 +5,6 @@ B. ORM không bị bẻ cong	       ✅ ĐẠT	              Không dùng raw qu
 C. SP không dynamic SQL	       ✅ ĐẠT	              Tham số trực tiếp
 D. Không Second-Order	         ✅ ĐẠT	                Data không reuse vào SQL
 E. Không Logic Flaw SQL	       ✅ ĐẠT	              Cơ bản ok
+
+
+phần 5, web-vuln code cấu hỉnh lỗi để học khai thác sqli
