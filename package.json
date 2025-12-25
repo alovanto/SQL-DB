@@ -1,0 +1,33 @@
+{
+  "name": "lab-sql",
+  "version": "1.0.0",
+  "description": "Lab SQL - Raw SQL vs ORM vs Stored Procedures + E-Commerce Web App",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node web-app/server.js",
+    "dev": "node web-app/server.js",
+    "vulnerable": "node 05-vulnerable-api/server.js",
+    "setup-db": "node 01-sql-basics/setup-database.js",
+    "demo:raw": "node 02-raw-sql/read.js",
+    "demo:orm": "node 03-orm/read.js",
+    "demo:sp": "node 04-stored-procedures/call-sp.js"
+  },
+  "keywords": [
+    "sql",
+    "mysql",
+    "orm",
+    "sequelize",
+    "ecommerce",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^5.2.1",
+    "mysql2": "^3.6.0",
+    "sequelize": "^6.35.0"
+  }
+}
